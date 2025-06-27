@@ -45,12 +45,17 @@ function MagicLinkModal({ children }: MagicLinkModalProps) {
     setLoading(true);
 
     try {
+      // Get the current origin dynamically
+      const currentOrigin =
+        typeof window !== "undefined"
+          ? window.location.origin
+          : "https://hotmass-test-task.vercel.app";
+
       const { error } = await supabase.auth.signInWithOtp({
         email: email.trim(),
         options: {
-          // Use the auth callback route
-          emailRedirectTo: `${window.location.origin}/auth/callback?next=/dashboard`,
-          // Don't create user if they don't exist
+          // Use dynamic origin for the callback
+          emailRedirectTo: `${currentOrigin}/auth/callback?next=/dashboard`,
           shouldCreateUser: true,
         },
       });
