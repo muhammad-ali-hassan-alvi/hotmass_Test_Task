@@ -1,38 +1,24 @@
-"use client";
+// app/auth/callback/page.tsx
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import { createClient } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
 
-export default function AuthCallback() {
-  const router = useRouter();
+export default async function AuthCallbackPage({
+  searchParams,
+}: {
+  searchParams: { code?: string; next?: string };
+}) {
+  const code = searchParams.code;
+  const next = searchParams.next ?? "/dashboard";
 
-  useEffect(() => {
-    const handleAuthCallback = async () => {
-      const supabase = createClient();
+  if (code) {
+    const supabase = await createClient();
+    const { error } = await supabase.auth.exchangeCodeForSession(code);
 
-      const { data, error } = await supabase.auth.getSession();
+    if (!error) {
+      return redirect(next);
+    }
+  }
 
-      if (error) {
-        console.error("Auth callback error:", error);
-        router.push("/auth/auth-code-error");
-        return;
-      }
-
-      if (data.session) {
-        router.push("/dashboard");
-      } else {
-        router.push("/");
-      }
-    };
-
-    handleAuthCallback();
-  }, [router]);
-
-  return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-      <span className="ml-2">Signing you in...</span>
-    </div>
-  );
+  return redirect("/auth/auth-code-error");
 }
